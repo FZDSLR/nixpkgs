@@ -16,7 +16,7 @@
   pkg-config,
   gettext,
   ncurses,
-  python3,
+  buildPackages,
   cargo,
   cmake,
   fishPlugins,
@@ -266,7 +266,7 @@ stdenv.mkDerivation (finalAttrs: {
     cat > share/functions/__fish_anypython.fish <<EOF
     # localization: skip(private)
     function __fish_anypython
-        echo ${python3.interpreter}
+        echo ${buildPackages.python3.interpreter}
         return 0
     end
     EOF
@@ -301,7 +301,7 @@ stdenv.mkDerivation (finalAttrs: {
     pkg-config
     rustc
     rustPlatform.cargoSetupHook
-    (python3.withPackages (ps: [
+    (buildPackages.python3.withPackages (ps: [
       ps.pexpect
       ps.sphinx
     ]))
@@ -338,6 +338,9 @@ stdenv.mkDerivation (finalAttrs: {
   ''
   + lib.optionalString (stdenv.hostPlatform != stdenv.buildPlatform) ''
     export CMAKE_PREFIX_PATH=
+    mkdir -p native-target
+    cargo build --bin fish_indent --target-dir native-target
+    export FISH_INDENT_FOR_BUILDING_DOCS=$PWD/native-target/debug/fish_indent
   '';
 
   # Required binaries during execution
@@ -431,7 +434,7 @@ stdenv.mkDerivation (finalAttrs: {
 
             # and check whether the message appears on the page
             # cannot test the http server because it needs a localhost port
-            cat (${python3}/bin/python ./webconfig.py \
+            cat (${buildPackages.python3}/bin/python ./webconfig.py \
               | tail -n1 | ${lib.getExe gnused} -e 's|file://||' \
             ) | ${lib.getExe gnugrep} -q 'a href="http://localhost.*Start the Fish Web config'
           '';
